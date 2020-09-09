@@ -7,6 +7,12 @@
 
 #define BigFloat long double
 
+#if 1
+#define dbg(x)
+#else
+#define dbg(x) std::cout << x
+#endif
+
 enum class TokenType
 {
     Number,      // BigFloat

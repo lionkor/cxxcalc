@@ -5,13 +5,6 @@
 #include <cassert>
 #include <fstream>
 
-#if 0
-#define dbg(x)
-#else
-#define dbg(x) std::cout << x
-#endif
-
-
 static inline size_t find_matching_parentheses(const std::string& str, size_t start) {
     size_t open_count = 1;
     for (size_t i = start + 1; i < str.size(); ++i) {
@@ -38,7 +31,7 @@ ssize_t Calculator::find_highest_precedence_operator_index() {
             } else {
             }
         } catch (const std::exception& e) {
-            std::cerr << __FUNCTION__ << ": " << e.what() << std::endl;
+            dbg(__FUNCTION__ << ": " << e.what() << std::endl);
         }
     }
     return -1;
@@ -162,7 +155,8 @@ bool Calculator::parse(const std::string& raw_expr) {
             size_t start = i;
             size_t end = find_matching_parentheses(expr, i);
             if (end == start) { // means error
-                std::cerr << "Parser error: mismatched parentheses" << std::endl;
+                dbg("Parser error: mismatched parentheses" << std::endl);
+                m_tokens.clear();
                 return false;
             }
             // create a sub calculator for parentheses expressions
@@ -170,7 +164,8 @@ bool Calculator::parse(const std::string& raw_expr) {
             tok.data = Calculator();
             bool result = std::get<Calculator>(tok.data).parse(expr.substr(start + 1, end - start - 1));
             if (!result) {
-                std::cerr << "Parser error: failed parsing parentheses at " << start << " to " << end << std::endl;
+                dbg("Parser error: failed parsing parentheses at " << start << " to " << end << std::endl);
+                m_tokens.clear();
                 return false;
             }
             // skip whole parentheses part
@@ -230,7 +225,8 @@ bool Calculator::parse(const std::string& raw_expr) {
                 }
             }
         } else {
-            std::cerr << "Parser error: token not caught by any parser method" << std::endl;
+            dbg("Parser error: token not caught by any parser method" << std::endl);
+            m_tokens.clear();
             return false;
         }
 
