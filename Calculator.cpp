@@ -3,6 +3,14 @@
 #include <algorithm>
 #include <iostream>
 #include <cassert>
+#include <fstream>
+
+#if 0
+#define dbg(x)
+#else
+#define dbg(x) std::cout << x
+#endif
+
 
 static inline size_t find_matching_parentheses(const std::string& str, size_t start) {
     size_t open_count = 1;
@@ -30,49 +38,48 @@ ssize_t Calculator::find_highest_precedence_operator_index() {
             } else {
             }
         } catch (const std::exception& e) {
-            std::cout << __FUNCTION__ << ": " << e.what() << std::endl;
+            std::cerr << __FUNCTION__ << ": " << e.what() << std::endl;
         }
     }
     return -1;
 }
 
 void Calculator::print_tokens() const {
-    //std::cout << "Tokens: { ";
+    //dbg << "Tokens: { ";
     size_t i = 0;
     for (const auto& tok : m_tokens) {
         if (tok.type == Token::Number) {
-            std::cout << std::get<BigFloat>(tok.data);
+            dbg(std::get<BigFloat>(tok.data));
         } else if (tok.type == Token::Operator) {
             switch (std::get<Operator>(tok.data)) {
             case Operator::Add:
-                std::cout << "+";
+                dbg("+");
                 break;
             case Operator::Sub:
-                std::cout << "-";
+                dbg("-");
                 break;
             case Operator::Mult:
-                std::cout << "*";
+                dbg("*");
                 break;
             case Operator::Div:
-                std::cout << "/";
+                dbg("/");
                 break;
             case Operator::Mod:
-                std::cout << "%";
+                dbg("%");
                 break;
             }
         } else if (tok.type == Token::Parentheses) {
-            std::cout << "(...)";
+            dbg("(...)");
         } else {
-            std::cout << "???";
+            dbg("???");
         }
         ++i;
         if (i != m_tokens.size()) {
-            //std::cout << ", ";
-            std::cout << " ";
+            dbg(" ");
         }
     }
-    std::cout << std::endl;
-    //std::cout << " }" << std::endl;
+    dbg(std::endl);
+    //dbg << " }" << std::endl;
 }
 
 void Calculator::replace_tokens(size_t from, size_t to, const Token& tok) {
@@ -123,7 +130,7 @@ bool Calculator::parse(const std::string& raw_expr) {
             size_t start = i;
             size_t end = find_matching_parentheses(expr, i);
             if (end == start) { // means error
-                std::cout << "Parser error: mismatched parentheses" << std::endl;
+                std::cerr << "Parser error: mismatched parentheses" << std::endl;
                 return false;
             }
             // create a sub calculator for parentheses expressions
@@ -131,7 +138,7 @@ bool Calculator::parse(const std::string& raw_expr) {
             tok.data = Calculator();
             bool result = std::get<Calculator>(tok.data).parse(expr.substr(start + 1, end - start - 1));
             if (!result) {
-                std::cout << "Parser error: failed parsing parentheses at " << start << " to " << end << std::endl;
+                std::cerr << "Parser error: failed parsing parentheses at " << start << " to " << end << std::endl;
                 return false;
             }
             // skip whole parentheses part
@@ -173,7 +180,7 @@ bool Calculator::parse(const std::string& raw_expr) {
                 assert(false);
             }
         } else {
-            std::cout << "Parser error: token not caught by any parser method" << std::endl;
+            std::cerr << "Parser error: token not caught by any parser method" << std::endl;
             return false;
         }
 
