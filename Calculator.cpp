@@ -87,6 +87,8 @@ void Calculator::print_tokens() const {
                 dbg("(+)");
                 break;
             }
+        } else if (tok.type == Token::Type::Ans){
+            dbg("ans");
         } else {
             dbg("???");
         }
@@ -227,8 +229,8 @@ bool Calculator::parse(const std::string& raw_expr) {
             }
         } else if (std::isalpha(c)) {
             if (expr.substr(i, 3) == "ans") {
-                tok.type = Token::Type::Number;
-                tok.data = m_last_result;
+                tok.type = Token::Type::Ans;
+                tok.data = 0.0;
                 i += 2;
             } else {
                 for (const auto& pair : s_constants) {
@@ -283,16 +285,26 @@ BigFloat Calculator::execute() {
     try {
         for (;;) {
             print_tokens();
-            // handle parentheses first
+
             auto iter = std::find_if(m_tokens.begin(), m_tokens.end(), [&](const Token& tok) {
-                return tok.type == Token::Type::Parentheses;
+                return tok.type == Token::Type::Ans;
             });
 
             if (iter != m_tokens.end()) {
+                Token tok;
+                tok.type = Token::Type::Number;
+                tok.data = m_last_result;
+                replace_tokens(iter, iter + 1, tok);
+            } else if ((iter = std::find_if(m_tokens.begin(), m_tokens.end(), [&](const Token& tok) {
+                           return tok.type == Token::Type::Parentheses;
+                       }))
+                       != m_tokens.end()) {
                 // found parentheses, execute them
                 Token tok;
                 tok.type = Token::Type::Number;
-                tok.data = std::get<Calculator>(iter->data).execute();
+                Calculator& calc = std::get<Calculator>(iter->data);
+                calc.m_last_result = m_last_result;
+                tok.data = calc.execute();
                 bool negative = false;
                 // if prefixed with a negative sign we negate the result of the parentheses
                 if ((iter - 1) > m_tokens.begin()

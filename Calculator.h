@@ -20,6 +20,7 @@ enum class TokenType
     Operator,    // ::Operator
     Parentheses, // Calculator
     Sign,
+    Ans,
 };
 
 enum class Operator
@@ -58,7 +59,6 @@ private:
 
     void replace_tokens(size_t from, size_t to, const Token& tok);
     void replace_tokens(std::vector<Token>::const_iterator from, std::vector<Token>::const_iterator to, const Token& tok);
-
 
 public:
     Calculator();
