@@ -6,6 +6,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic --pedantic-erro
 
 project(cxxcalc)
 
-add_executable(cxxcalc main.cpp)
+add_executable(cxxcalc main.cpp Calculator.cpp)
 
 #target_link_libraries(${CMAKE_PROJECT_NAME} )
