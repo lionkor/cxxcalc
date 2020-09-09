@@ -151,6 +151,7 @@ bool Calculator::parse(const std::string& raw_expr) {
     for (size_t i = 0; i < expr.size(); ++i) {
         const char& c = expr[i];
         Token tok;
+
         if (c == '(') {
             size_t start = i;
             size_t end = find_matching_parentheses(expr, i);
@@ -222,6 +223,21 @@ bool Calculator::parse(const std::string& raw_expr) {
                     break;
                 default:
                     assert(false);
+                }
+            }
+        } else if (std::isalpha(c)) {
+            if (expr.substr(i, 3) == "ans") {
+                tok.type = Token::Type::Number;
+                tok.data = m_last_result;
+                i += 2;
+            } else {
+                for (const auto& pair : s_constants) {
+                    if (pair.first == expr.substr(i, pair.first.size())) {
+                        tok.type = Token::Type::Number;
+                        tok.data = pair.second;
+                        i += pair.first.size() - 1;
+                        break;
+                    }
                 }
             }
         } else {
@@ -362,5 +378,6 @@ BigFloat Calculator::execute() {
         throw std::runtime_error(std::string("Error: ") + e.what());
     }
     m_tokens.clear();
+    m_last_result = result;
     return result;
 }
