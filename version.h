@@ -1,4 +1,4 @@
-#define VERSION "v1.1"
+#define VERSION "v1.2"
 
 #define HELP_TEXT                                                                              \
     "cxxcalc " VERSION                                                                         \
@@ -18,8 +18,8 @@
     "Both negative `-` and positive `+` SIGNS are supported. Multiple successive SIGNS are \n" \
     "supported and get simplified.\n\n"                                                        \
     "The following CONSTANTS and VARIABLES are supported:\n"                                   \
-    "   pi  : Constant Pi\n"                                                                    \
-    "   e   : Constant e\n"                                                                     \
+    "   pi  : Constant Pi\n"                                                                   \
+    "   e   : Constant e\n"                                                                    \
     "   ans : Last result\n"
 
 #define GOODBYE_TEXT \
