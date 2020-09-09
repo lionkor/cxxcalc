@@ -16,15 +16,7 @@ enum class Operator
     Mod
 };
 
-struct Token {
-    enum Type
-    {
-        Number,
-        Operator,
-    } type;
-
-    std::variant<BigFloat, ::Operator> data;
-};
+struct Token;
 
 class Calculator
 {
@@ -37,12 +29,24 @@ private:
 
     void replace_tokens(size_t from, size_t to, const Token& tok);
 
+
 public:
     Calculator();
 
     bool parse(const std::string& expr);
 
-    std::string execute();
+    BigFloat execute();
+};
+
+struct Token {
+    enum Type
+    {
+        Number,     // BigFloat
+        Operator,   // ::Operator
+        Parentheses // Calculator
+    } type;
+
+    std::variant<BigFloat, ::Operator, Calculator> data;
 };
 
 #endif // CALCULATOR_H

@@ -15,8 +15,12 @@ int main() {
         std::getline(std::cin, input);
         std::string result = "invalid input";
         if (calc.parse(input)) {
-            result = calc.execute();
+            try {
+                result = std::to_string(calc.execute());
+            } catch (const std::exception& e) {
+                std::cout << "execute failed: " << e.what() << std::endl;
+            }
         }
-        std::cout << result << std::endl;
+        std::cout << " = " << result << std::endl;
     }
 }

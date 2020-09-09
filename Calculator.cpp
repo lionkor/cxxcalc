@@ -4,6 +4,21 @@
 #include <iostream>
 #include <cassert>
 
+static inline size_t find_matching_parentheses(const std::string& str, size_t start) {
+    size_t open_count = 1;
+    for (size_t i = start + 1; i < str.size(); ++i) {
+        if (str[i] == '(') {
+            open_count += 1;
+        } else if (str[i] == ')') {
+            open_count -= 1;
+        }
+        if (open_count == 0) {
+            return i;
+        }
+    }
+    return start;
+}
+
 ssize_t Calculator::find_highest_precedence_operator_index() {
     for (Operator op : { Operator::Mult, Operator::Div, Operator::Add, Operator::Sub }) {
         try {
@@ -45,6 +60,8 @@ void Calculator::print_tokens() const {
                 std::cout << "%";
                 break;
             }
+        } else if (tok.type == Token::Parentheses) {
+            std::cout << "(...)";
         } else {
             std::cout << "???";
         }
@@ -102,7 +119,24 @@ bool Calculator::parse(const std::string& raw_expr) {
     for (size_t i = 0; i < expr.size(); ++i) {
         const char& c = expr[i];
         Token tok;
-        if (is_digit_or_number_symbol(c)) {
+        if (c == '(') {
+            size_t start = i;
+            size_t end = find_matching_parentheses(expr, i);
+            if (end == start) { // means error
+                std::cout << "Parser error: mismatched parentheses" << std::endl;
+                return false;
+            }
+            // create a sub calculator for parentheses expressions
+            tok.type = Token::Parentheses;
+            tok.data = Calculator();
+            bool result = std::get<Calculator>(tok.data).parse(expr.substr(start + 1, end - start - 1));
+            if (!result) {
+                std::cout << "Parser error: failed parsing parentheses at " << start << " to " << end << std::endl;
+                return false;
+            }
+            // skip whole parentheses part
+            i = end;
+        } else if (is_digit_or_number_symbol(c)) {
             // find end of this number
             size_t count;
             for (count = i; count < expr.size(); ++count) {
@@ -117,9 +151,7 @@ bool Calculator::parse(const std::string& raw_expr) {
             tok.type = Token::Number;
             tok.data = dbl;
             i = count - 1;
-        } else if (false && is_operator(c)) {
-
-        } else {
+        } else if (is_operator(c)) {
             tok.type = Token::Operator;
             switch (c) {
             case '+':
@@ -140,6 +172,9 @@ bool Calculator::parse(const std::string& raw_expr) {
             default:
                 assert(false);
             }
+        } else {
+            std::cout << "Parser error: token not caught by any parser method" << std::endl;
+            return false;
         }
 
         m_tokens.push_back(tok);
@@ -148,11 +183,23 @@ bool Calculator::parse(const std::string& raw_expr) {
     return true;
 }
 
-std::string Calculator::execute() {
+BigFloat Calculator::execute() {
     BigFloat result = 0;
     try {
         for (;;) {
             print_tokens();
+            // handle parentheses first
+            auto iter = std::find_if(m_tokens.begin(), m_tokens.end(), [&](const Token& tok) {
+                return tok.type == Token::Parentheses;
+            });
+
+            if (iter != m_tokens.end()) {
+                // found parentheses, execute them
+                Token tok;
+                tok.type = Token::Number;
+                tok.data = std::get<Calculator>(iter->data).execute();
+                replace_tokens(iter - m_tokens.begin(), iter - m_tokens.begin() + 1, tok);
+            }
             if (m_tokens.size() == 1) {
                 if (m_tokens.at(0).type == Token::Number) {
                     result = std::get<BigFloat>(m_tokens[0].data);
@@ -161,8 +208,8 @@ std::string Calculator::execute() {
                     throw std::runtime_error("invalid input (1)");
                 }
             } else {
+
                 // find highest precedence operator
-                // *
                 ssize_t index = find_highest_precedence_operator_index();
                 if (index < 0) {
                     // no more operators, but not only one number left -> something's wacky
@@ -215,14 +262,12 @@ std::string Calculator::execute() {
                 }
 
                 replace_tokens(start, end + 1, expr_result);
-
-                //throw std::runtime_error("not implemented");
             }
         }
     } catch (const std::exception& e) {
         m_tokens.clear();
-        return std::string("Error: ") + e.what();
+        throw std::runtime_error(std::string("Error: ") + e.what());
     }
     m_tokens.clear();
-    return std::string(" = ") + std::to_string(result);
+    return result;
 }
