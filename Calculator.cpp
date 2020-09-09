@@ -22,7 +22,7 @@ ssize_t Calculator::find_highest_precedence_operator_index() {
 }
 
 void Calculator::print_tokens() const {
-    std::cout << "Tokens: { ";
+    //std::cout << "Tokens: { ";
     size_t i = 0;
     for (const auto& tok : m_tokens) {
         if (tok.type == Token::Number) {
@@ -50,10 +50,22 @@ void Calculator::print_tokens() const {
         }
         ++i;
         if (i != m_tokens.size()) {
-            std::cout << ", ";
+            //std::cout << ", ";
+            std::cout << " ";
         }
     }
-    std::cout << " }" << std::endl;
+    std::cout << std::endl;
+    //std::cout << " }" << std::endl;
+}
+
+void Calculator::replace_tokens(size_t from, size_t to, const Token& tok) {
+    if (to > m_tokens.size()) {
+        throw std::runtime_error(std::string(__FUNCTION__) + ": to >= size");
+    } else if (from > to) {
+        throw std::runtime_error(std::string(__FUNCTION__) + ": from > to");
+    }
+    m_tokens.erase(m_tokens.begin() + from, m_tokens.begin() + to);
+    m_tokens.insert(m_tokens.begin() + from, tok);
 }
 
 Calculator::Calculator() {
@@ -74,6 +86,10 @@ static inline bool is_operator(char c) {
     return contains(std::string("+-*/%"), c);
 }
 
+static inline bool is_digit_or_number_symbol(char c) {
+    return std::isdigit(c) || c == '.';
+}
+
 bool Calculator::parse(const std::string& raw_expr) {
     // remove spaces
     std::string expr = raw_expr;
@@ -86,11 +102,11 @@ bool Calculator::parse(const std::string& raw_expr) {
     for (size_t i = 0; i < expr.size(); ++i) {
         const char& c = expr[i];
         Token tok;
-        if (std::isdigit(c)) {
+        if (is_digit_or_number_symbol(c)) {
             // find end of this number
             size_t count;
             for (count = i; count < expr.size(); ++count) {
-                if (!std::isdigit(expr[count])) {
+                if (!is_digit_or_number_symbol(expr[count])) {
                     break;
                 }
             }
@@ -164,7 +180,43 @@ std::string Calculator::execute() {
                     throw std::runtime_error("invalid input (3)");
                 }
 
-                throw std::runtime_error("not implemented");
+                size_t start = index - 1;
+                size_t end;
+
+                BigFloat left = std::get<BigFloat>(m_tokens.at(index - 1).data);
+                BigFloat right;
+                if (next_is_negative) {
+                    end = index + 2;
+                    right = -1.0L * std::get<BigFloat>(m_tokens.at(index + 2).data);
+                } else {
+                    end = index + 1;
+                    right = std::get<BigFloat>(m_tokens.at(index + 1).data);
+                }
+
+                Token expr_result;
+                expr_result.type = Token::Number;
+
+                switch (std::get<Operator>(op.data)) {
+                case Operator::Add:
+                    expr_result.data = left + right;
+                    break;
+                case Operator::Sub:
+                    expr_result.data = left - right;
+                    break;
+                case Operator::Mult:
+                    expr_result.data = left * right;
+                    break;
+                case Operator::Div:
+                    expr_result.data = left / right;
+                    break;
+                case Operator::Mod:
+                    expr_result.data = (BigFloat)(int64_t(left) % int64_t(right));
+                    break;
+                }
+
+                replace_tokens(start, end + 1, expr_result);
+
+                //throw std::runtime_error("not implemented");
             }
         }
     } catch (const std::exception& e) {

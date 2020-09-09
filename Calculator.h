@@ -34,6 +34,9 @@ private:
     ssize_t find_highest_precedence_operator_index();
 
     void print_tokens() const;
+
+    void replace_tokens(size_t from, size_t to, const Token& tok);
+
 public:
     Calculator();
 
