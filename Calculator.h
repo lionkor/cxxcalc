@@ -47,7 +47,7 @@ class Calculator
 {
 private:
     std::vector<Token> m_tokens;
-    BigFloat m_last_result;
+    BigFloat m_last_result { 0 };
 
     ssize_t find_highest_precedence_operator_index();
     ssize_t find_next_sign_index();
